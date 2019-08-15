@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -19,13 +20,13 @@ type cconfig struct {
 func main() {
 	box := packr.New("Configs", "./config")
 
-	cconfigStr, err := box.FindString("__cconfig.json")
+	cconf, err := box.Find("__cconfig.json")
 	if err != nil {
 		panic(err)
 	}
 
 	var cc cconfig
-	err = json.Unmarshal([]byte(cconfigStr), &cc)
+	err = json.Unmarshal(cconf, &cc)
 	if err != nil {
 		panic(err)
 	}
@@ -76,28 +77,82 @@ func serveConfig(box *packr.Box) http.HandlerFunc {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		jsonString, err := box.FindString(application + ".json5")
-		if err != nil {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		}
 
-		var tempIface interface{}
-		err = json5.Unmarshal([]byte(jsonString), &tempIface)
+		tempIface, err := accessConfig(application, box)
+
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprint(w, err.Error())
+			fmt.Fprintf(w, err.Error())
 			return
 		}
 
+		// json marshaling a non json is also good in this case
+		// because if it is an interface that we try to marshal as type
+		// we need to use gob.Encoder to convert into bytes
+		// in this case json.Marshal does a pretty good job of returning
+		// bytes of primitive type without the need to cast it
 		resp, err := json.Marshal(tempIface)
+
+		// TODO: this error thing is repeating
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprint(w, err.Error())
+			fmt.Fprintf(w, err.Error())
 			return
 		}
 
-		w.Header().Set("Content-Type", "application/json")
+		if _, ok := tempIface.(map[string]interface{}); ok {
+			w.Header().Set("Content-Type", "application/json")
+		}
 		w.Write(resp)
 	}
+}
+
+func accessConfig(accessor string, box *packr.Box) (interface{}, error) {
+	var fields = []string{}
+
+	if strings.Contains(accessor, ".") {
+		fields = strings.Split(accessor, ".")
+	} else {
+		fields = append(fields, accessor)
+	}
+
+	jsonString, err := box.FindString(fields[0] + ".json5")
+	if err != nil {
+		return nil, err
+	}
+
+	var tempIface map[string]interface{}
+	err = json5.Unmarshal([]byte(jsonString), &tempIface)
+	if err != nil {
+		return nil, err
+	}
+
+	// then we have entered the arena of dot notations
+	if len(fields) > 1 {
+		var finalValue interface{}
+		for _, f := range fields[1:] {
+			if finalValue == nil {
+				if tempIface[f] == nil {
+					return nil, noSuchKeyErr(f, accessor)
+				}
+				finalValue = tempIface[f]
+			} else {
+				interm, ok := finalValue.(map[string]interface{})
+				if !ok {
+					return nil, noSuchKeyErr(f, accessor)
+				}
+				if interm[f] == nil {
+					return nil, noSuchKeyErr(f, accessor)
+				}
+				finalValue = interm[f]
+			}
+		}
+		return finalValue, nil
+	}
+
+	return tempIface, nil
+}
+
+func noSuchKeyErr(key, acc string) error {
+	return errors.New("no such key: " + key + " for notation: " + acc)
 }

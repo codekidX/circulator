@@ -44,7 +44,7 @@ go run main.go
 
 - [x] Add password protection to the binary so that no one else in the world can run it
 - [ ] Write tests
-- [ ] Support for accessing through dot notation
+- [x] Support for accessing through dot notation
 - [ ] Spit out config files from the binary
 - [ ] Support for different environment - this is a long shot and maybe it should not be included to make this a complex application _(because we could include "$ENV" key and same object to a single file the problem is it'll become big and messy)_
 

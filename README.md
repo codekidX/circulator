@@ -28,19 +28,11 @@ A simple API call to `localhost:$YOUR_PORT/?app="coolapp"` should give you a JSO
 
 #### __cconfig.json
 
-Has 3 values: 
-
-- port = defines on which port circulator should run
-- secret = the bearer token that you can set for authorizing requests
-- protect = boolean to protect server from being used by other people and ask for secret when your server runs
-
-```json
-{
-    "port": 8000,
-    "secret": "blahblah",
-    "protect": true
-}
-```
+| Key | Type | Description |
+|------|------|-----------|
+| port | number | defines on which port circulator should run |
+| secret | string | the bearer token that you can set for authorizing requests |
+| protect | boolean | protect server from being used by other people and ask for secret when your server runs |
 
 ## Running
 
@@ -50,7 +42,7 @@ go run main.go
 
 ## TODOs
 
-- [ ] Add password protection to the binary so that no one else in the world can run it
+- [x] Add password protection to the binary so that no one else in the world can run it
 - [ ] Write tests
 - [ ] Support for accessing through dot notation
 - [ ] Spit out config files from the binary

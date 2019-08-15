@@ -11,8 +11,9 @@ import (
 )
 
 type cconfig struct {
-	Port   int    `json:"port"`
-	Secret string `json:"secret"`
+	Port    int    `json:"port"`
+	Secret  string `json:"secret"`
+	Protect bool   `json:"protect"`
 }
 
 func main() {
@@ -29,12 +30,28 @@ func main() {
 		panic(err)
 	}
 
-	http.HandleFunc("/", authenticated(cc.Secret, serveConfig(box)))
-	fmt.Println(fmt.Sprintf("Circulator starting at port: %d", cc.Port))
-	panic(http.ListenAndServe(fmt.Sprintf(":%d", cc.Port), nil))
+	if cc.Protect {
+		var evalSecret string
+		fmt.Println("Enter secret below to start: ")
+		fmt.Scanln(&evalSecret)
+		if evalSecret == cc.Secret {
+			startServer(cc, box)
+		} else {
+			fmt.Println("Secret did not match with the one that it was built with.")
+		}
+		return
+	}
+
+	startServer(cc, box)
 }
 
-func authenticated(evalSecret string, aHandler http.HandlerFunc) http.HandlerFunc {
+func startServer(c cconfig, box *packr.Box) {
+	http.HandleFunc("/", authenticated(c, serveConfig(box)))
+	fmt.Println(fmt.Sprintf("Circulator starting at port: %d", c.Port))
+	panic(http.ListenAndServe(fmt.Sprintf(":%d", c.Port), nil))
+}
+
+func authenticated(c cconfig, aHandler http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		bearer := r.Header.Get("Authorization")
 		if bearer == "" {
@@ -43,7 +60,7 @@ func authenticated(evalSecret string, aHandler http.HandlerFunc) http.HandlerFun
 		}
 
 		secret := strings.Split(bearer, " ")[1]
-		if secret != "" && evalSecret == secret {
+		if secret != "" && c.Secret == secret {
 			aHandler(w, r)
 			return
 		}

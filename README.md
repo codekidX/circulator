@@ -23,20 +23,22 @@ The `config/` folder is the heart of the circulator and it holds all the JSON5 c
 
 A simple API call to `localhost:$YOUR_PORT/?app="coolapp"` should give you a JSON response.
 
-> $YOUR_PORT can be defined inside `./configs/__cconfig.json`
+> $YOUR_PORT can be defined inside `./config/__cconfig.json`
 
 
 #### __cconfig.json
 
-Has 2 values: 
+Has 3 values: 
 
 - port = defines on which port circulator should run
 - secret = the bearer token that you can set for authorizing requests
+- protect = boolean to protect server from being used by other people and ask for secret when your server runs
 
 ```json
 {
     "port": 8000,
-    "secret": "blahblah"
+    "secret": "blahblah",
+    "protect": true
 }
 ```
 
@@ -48,10 +50,11 @@ go run main.go
 
 ## TODOs
 
-- [ ] unchecked
+- [ ] Add password protection to the binary so that no one else in the world can run it
 - [ ] Write tests
 - [ ] Support for accessing through dot notation
 - [ ] Spit out config files from the binary
+- [ ] Support for different environment - this is a long shot and maybe it should not be included to make this a complex application _(because we could include "$ENV" key and same object to a single file the problem is it'll become big and messy)_
 
 
 ## Confessions

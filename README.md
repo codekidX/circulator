@@ -21,12 +21,20 @@ It embeds the static configuration JSON5 inside the final binary that it builds 
 
 The `config/` folder is the heart of the circulator and it holds all the JSON5 configuration. The heirarchy that works for me is application based, so each JSON5 file belongs to a single application.
 
-A simple API call to `localhost:$YOUR_PORT/?app="coolapp"` should give you a JSON response.
+## Accessing configs
 
-> $YOUR_PORT can be defined inside `./config/__cconfig.json`
+- API call to `localhost:$YOUR_PORT/?app=$CONFIG_FILE_NAME` should give you a JSON response of the file.
+- Through **dot notation** - `localhost:$YOUR_PORT/?app=$CONFIG_FILE_NAME.$KEY` will give you the value of nested object
+> _Example: `coolapp.auth.token` will return "mytoken"_ if config is
+> ```
+> {"auth": {"token": "mytoken"}}
+> ```
 
+**$YOUR_PORT** can be defined inside `./config/__cconfig.json`
 
-#### __cconfig.json
+## What is __cconfig.json ?
+
+It is the configuration file for the behaviour of circulator.
 
 | Key | Type | Description |
 |------|------|-----------|
@@ -40,6 +48,13 @@ A simple API call to `localhost:$YOUR_PORT/?app="coolapp"` should give you a JSO
 go run main.go
 ```
 
+## Error codes
+
+- `400`: not enough params, missing `app` maybe?
+- `401`: bearer token wrong or missing
+- `404`: config file not found
+- `500`: wrong dot notation, unable to parse JSON
+
 ## TODOs
 
 - [x] Add password protection to the binary so that no one else in the world can run it
@@ -51,7 +66,8 @@ go run main.go
 
 ## Confessions
 
-- It is not a great tool if you are working as a team - Have any idea that can make this project collaborative - [ping me](https://github.com/codekidX/circulator/issues).
+- It is not a great tool if you are working as a team - Have any idea that can make this project collaborative - [ping me](https://github.com/codekidX/circulator/issues). 
+> But it becomes one if you are using it in a private environment, just remove the `config/` from `.gitignore`
 - It does not support other configuration languages.
 - Why JSON5? - Comments, because I have a 3 months threshold of remembering code and also it excels at single way of writing things which is a rare entity these days.
 

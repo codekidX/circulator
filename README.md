@@ -21,6 +21,13 @@ It embeds the static configuration JSON5 inside the final binary that it builds 
 
 The `config/` folder is the heart of the circulator and it holds all the JSON5 configuration. The heirarchy that works for me is application based, so each JSON5 file belongs to a single application.
 
+## Advantages of this approach
+
+- You don't have any configuration files in your final deploy
+- You don't need to use separate library for application _(of any language)_ like .env, and/or external dependencies that wants the configs
+- You have a single secret string that could be passed through environment variables
+- The target application that has the configs have it in a volatile state
+
 ## Accessing configs
 
 - API call to `localhost:$YOUR_PORT/?app=$CONFIG_FILE_NAME` should give you a JSON response of the file.
